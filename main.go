@@ -14,6 +14,7 @@ func (a apiHandler) ServeHTTP(http.ResponseWriter, *http.Request) {
 
 func main() {
 	const filepathRoot = "."
+	const logoPath = "assets/logo.png"
 	const port = "8080"
 
 	// create server mux

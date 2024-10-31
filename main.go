@@ -12,6 +12,7 @@ type apiConfig struct {
 
 func main() {
 	const filepathRoot = "."
+	const filepathAdmin = "./admin"
 	const port = "8080"
 
 	apiCfg := apiConfig{
@@ -24,9 +25,11 @@ func main() {
 
 	// register handlers
 	mux.Handle("/app/", fsHandler)
-	mux.HandleFunc("GET /healthz", handlerReadiness)
-	mux.HandleFunc("GET /metrics", apiCfg.handlerMetrics)
-	mux.HandleFunc("POST /reset", apiCfg.handlerReset)
+
+	mux.HandleFunc("GET /api/healthz", handlerReadiness)
+
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
 	// init the server config
 	s := &http.Server{

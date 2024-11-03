@@ -3,7 +3,32 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
+
+func replaceProfanity(msg string) string {
+	profaneWords := map[string]struct{}{
+		"kerfuffle": {},
+		"sharbert":  {},
+		"fornax":    {},
+	}
+
+	wordSlice := strings.Split(msg, " ")
+	newWordSlice := make([]string, len(wordSlice))
+	// log.Printf("VIBE CHECK wordSlice: %v\n", wordSlice) // DEBUG
+
+	for i, word := range wordSlice {
+		_, ok := profaneWords[strings.ToLower(word)]
+		if ok {
+			newWordSlice[i] = "****"
+			continue
+		}
+		newWordSlice[i] = word
+	}
+
+	// log.Printf("VIBE CHECK newWordSlice: %v\n", newWordSlice) // DEBUG
+	return strings.Join(newWordSlice, " ")
+}
 
 func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -24,9 +49,11 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newMsg := replaceProfanity(params.Body)
+
 	respondWithJSON(w, 200, struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}{
-		Valid: true,
+		CleanedBody: newMsg,
 	})
 }

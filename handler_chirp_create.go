@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Se7enSe7enSe7en/chirpy/internal/auth"
 	"github.com/Se7enSe7enSe7en/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -29,8 +30,7 @@ func getCleanedBody(body string, badWords map[string]struct{}) string {
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Body   string `json:"body"`
-		UserId string `json:"user_id"`
+		Body string `json:"body"`
 	}
 	type response struct {
 		ID        uuid.UUID     `json:"id"`
@@ -40,9 +40,21 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		UserID    uuid.NullUUID `json:"user_id"`
 	}
 
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Cannot get bearer token", err)
+		return
+	}
+
+	userId, err := auth.ValidateJWT(token, cfg.token)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "JWT invalid or expired", err)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
@@ -51,12 +63,6 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 	maxCharLength := 140
 	if len(params.Body) > maxCharLength {
 		respondWithError(w, http.StatusBadRequest, "Chirp is too long", err)
-		return
-	}
-
-	userId, err := uuid.Parse(params.UserId)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "user_id is not a valid UUID", err)
 		return
 	}
 

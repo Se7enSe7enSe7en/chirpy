@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	token          string
 }
 
 func main() {
@@ -31,6 +32,10 @@ func main() {
 	platform := os.Getenv("PLATFORM")
 	if platform == "" {
 		log.Fatal("PLATFORM must be set")
+	}
+	token := os.Getenv("TOKEN_STRING")
+	if token == "" {
+		log.Fatal("TOKEN_STRING must be set")
 	}
 
 	// initialize DB

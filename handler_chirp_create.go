@@ -11,6 +11,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
 func getCleanedBody(body string, badWords map[string]struct{}) string {
 	wordSlice := strings.Split(body, " ")
 
@@ -32,28 +40,21 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 	type parameters struct {
 		Body string `json:"body"`
 	}
-	type response struct {
-		ID        uuid.UUID     `json:"id"`
-		CreatedAt time.Time     `json:"created_at"`
-		UpdatedAt time.Time     `json:"updated_at"`
-		Body      string        `json:"body"`
-		UserID    uuid.NullUUID `json:"user_id"`
-	}
+	var err error
 
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Cannot get bearer token", err)
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
-
-	userId, err := auth.ValidateJWT(token, cfg.token)
+	userId, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "JWT invalid or expired", err)
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
+	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -75,18 +76,18 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 
 	chirpDB, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body:   cleanedBody,
-		UserID: uuid.NullUUID{UUID: userId, Valid: true},
+		UserID: userId,
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create chirp", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, response{
+	respondWithJSON(w, http.StatusCreated, Chirp{
 		ID:        chirpDB.ID,
 		CreatedAt: chirpDB.CreatedAt,
 		UpdatedAt: chirpDB.UpdatedAt,
-		Body:      chirpDB.Body,
 		UserID:    chirpDB.UserID,
+		Body:      chirpDB.Body,
 	})
 }

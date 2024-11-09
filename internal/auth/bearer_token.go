@@ -7,10 +7,15 @@ import (
 )
 
 func GetBearerToken(headers http.Header) (string, error) {
-	bearerToken := headers.Get("Authorization")
-	if bearerToken == "" {
-		return "", errors.New("no bearer token from headers")
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", errors.New("no auth header included in request")
 	}
 
-	return strings.ReplaceAll(bearerToken, "Bearer ", ""), nil
+	splitAuth := strings.Split(authHeader, " ")
+	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
+		return "", errors.New("malformed authorization header")
+	}
+
+	return splitAuth[1], nil
 }

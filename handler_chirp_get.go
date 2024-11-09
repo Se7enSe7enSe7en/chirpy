@@ -11,7 +11,7 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 	type response struct {
 		Id        uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"Updated_at"`
+		UpdatedAt time.Time `json:"updated_at"`
 		Body      string    `json:"body"`
 		UserId    uuid.UUID `json:"user_id"`
 	}
@@ -31,17 +31,11 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !chirpDB.UserID.Valid {
-		respondWithError(w, http.StatusInternalServerError, "Chirp user id from db is not valid", err)
-		return
-	}
-	userId := chirpDB.UserID.UUID
-
 	respondWithJSON(w, http.StatusOK, response{
 		Id:        chirpDB.ID,
 		CreatedAt: chirpDB.CreatedAt,
 		UpdatedAt: chirpDB.UpdatedAt,
 		Body:      chirpDB.Body,
-		UserId:    userId,
+		UserId:    chirpDB.UserID,
 	})
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -13,7 +12,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email            string `json:"email"`
 		Password         string `json:"password"`
-		ExpiresInSeconds string `json:"expires_in_seconds,omitempty"`
+		ExpiresInSeconds int    `json:"expires_in_seconds"`
 	}
 	type response struct {
 		User
@@ -35,17 +34,16 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiryStr := params.ExpiresInSeconds
-	if expiryStr == "" {
-		expiryStr = "3600" // 1hr in seconds
+	expirationTime := time.Hour
+	if params.ExpiresInSeconds > 0 && params.ExpiresInSeconds < 3600 {
+		expirationTime = time.Duration(params.ExpiresInSeconds) * time.Second
 	}
 
-	expiry, err := time.ParseDuration(fmt.Sprintf("%vs", expiryStr))
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Cannot parse expires_in_seconds", err)
-	}
-
-	jwtToken, err := auth.MakeJWT(userDB.ID, cfg.token, expiry)
+	jwtToken, err := auth.MakeJWT(
+		userDB.ID,
+		cfg.jwtSecret,
+		expirationTime,
+	)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Cannot make JWT token", err)
 	}

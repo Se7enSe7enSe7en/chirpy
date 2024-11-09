@@ -16,7 +16,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
-	token          string
+	jwtSecret      string
 }
 
 func main() {
@@ -33,9 +33,9 @@ func main() {
 	if platform == "" {
 		log.Fatal("PLATFORM must be set")
 	}
-	token := os.Getenv("TOKEN_STRING")
-	if token == "" {
-		log.Fatal("TOKEN_STRING must be set")
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET must be set")
 	}
 
 	// initialize DB
@@ -49,6 +49,7 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		platform:       platform,
+		jwtSecret:      jwtSecret,
 	}
 
 	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))

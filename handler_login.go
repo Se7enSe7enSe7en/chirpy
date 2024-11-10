@@ -35,26 +35,30 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, err := auth.MakeJWT(
+	accessToken, err := auth.MakeJWT(
 		userDB.ID,
 		cfg.jwtSecret,
 		time.Hour,
 	)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Cannot make JWT token", err)
+		return
 	}
 
 	refreshToken, err := auth.MakeRefreshToken()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Cannot make Refresh token", err)
+		return
 	}
 
-	refreshTokenExpiryDate := time.Now().AddDate(0, 0, 60)
-	cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+	_, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
 		Token:     refreshToken,
 		UserID:    userDB.ID,
-		ExpiresAt: refreshTokenExpiryDate,
+		ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 60), // 60 days
 	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Cannot create refresh token", err)
+	}
 
 	respondWithJSON(w, http.StatusOK, response{
 		User: User{
@@ -63,7 +67,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt: userDB.UpdatedAt,
 			Email:     userDB.Email,
 		},
-		Token:        jwtToken,
+		Token:        accessToken,
 		RefreshToken: refreshToken,
 	})
 }

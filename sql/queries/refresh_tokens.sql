@@ -4,34 +4,35 @@ INSERT INTO refresh_tokens(
         created_at,
         updated_at,
         user_id,
-        expires_at,
-        revoked_at
+        expires_at
     )
 VALUES (
         $1,
-        now(),
-        now(),
+        NOW(),
+        NOW(),
         $2,
-        $3,
-        $4
+        $3
     )
 RETURNING *;
--- name: GetRefreshToken :one
-SELECT *
-FROM refresh_tokens
-WHERE token = $1
-LIMIT 1;
--- name: GetUserFromRefreshToken :one
-SELECT u.*
-FROM refresh_tokens r
-    JOIN users u ON r.user_id = u.id
-WHERE r.token = $1
-LIMIT 1;
--- name: UpdateRefreshToken :one
+-- name: RevokeRefreshToken :one
 UPDATE refresh_tokens
-SET revoked_at = $2,
-    updated_at = now()
+SET revoked_at = NOW(),
+    updated_at = NOW()
 WHERE token = $1
 RETURNING *;
+-- name: GetUserFromRefreshToken :one
+SELECT users.*
+FROM users
+    JOIN refresh_tokens ON users.id = refresh_tokens.user_id
+WHERE refresh_tokens.token = $1
+    AND revoked_at IS NULL
+    AND expires_at > NOW();
+;
+-- -- name: GetUserFromRefreshToken :one
+-- SELECT u.*
+-- FROM refresh_tokens r
+--     JOIN users u ON r.user_id = u.id
+-- WHERE r.token = $1
+-- LIMIT 1;
 -- name: ResetRefreshTokensTable :exec
 DELETE FROM refresh_tokens;

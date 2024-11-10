@@ -34,5 +34,3 @@ WHERE refresh_tokens.token = $1
 --     JOIN users u ON r.user_id = u.id
 -- WHERE r.token = $1
 -- LIMIT 1;
--- name: ResetRefreshTokensTable :exec
-DELETE FROM refresh_tokens;

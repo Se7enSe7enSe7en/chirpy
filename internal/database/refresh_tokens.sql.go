@@ -72,23 +72,6 @@ func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (Us
 	return i, err
 }
 
-const resetRefreshTokensTable = `-- name: ResetRefreshTokensTable :exec
-DELETE FROM refresh_tokens
-`
-
-// -- name: GetUserFromRefreshToken :one
-// SELECT u.*
-// FROM refresh_tokens r
-//
-//	JOIN users u ON r.user_id = u.id
-//
-// WHERE r.token = $1
-// LIMIT 1;
-func (q *Queries) ResetRefreshTokensTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, resetRefreshTokensTable)
-	return err
-}
-
 const revokeRefreshToken = `-- name: RevokeRefreshToken :one
 UPDATE refresh_tokens
 SET revoked_at = NOW(),

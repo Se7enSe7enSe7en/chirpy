@@ -11,5 +11,3 @@ SELECT *
 FROM chirps
 WHERE id = $1
 LIMIT 1;
--- name: ResetChirpsTable :exec
-DELETE FROM chirps;

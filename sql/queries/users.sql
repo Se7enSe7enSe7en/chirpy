@@ -13,5 +13,3 @@ SELECT *
 FROM users
 WHERE email = $1
 LIMIT 1;
--- name: ResetUserTable :exec
-DELETE FROM users;

@@ -16,22 +16,21 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 	type response struct {
 		User
 	}
-
 	var err error
 
 	accessToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Cannot get bearer token", err)
+		respondWithError(w, http.StatusUnauthorized, "Cannot get JWT", err)
 		return
 	}
 	userId, err := auth.ValidateJWT(accessToken, cfg.jwtSecret)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Cannot validate access token", err)
+		respondWithError(w, http.StatusUnauthorized, "Cannot validate JWT", err)
 		return
 	}
 
-	params := parameters{}
 	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Cannot decode the body of the request", err)

@@ -42,12 +42,12 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 	}
 	var err error
 
-	token, err := auth.GetBearerToken(r.Header)
+	accessToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
-	userId, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	userId, err := auth.ValidateJWT(accessToken, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return

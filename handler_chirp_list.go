@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/google/uuid"
 )
@@ -16,6 +17,17 @@ func (cfg *apiConfig) handlerChirpList(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "Cannot parse author_id query param", err)
 		}
+	}
+
+	type sortOrderType string
+	const (
+		sortOrderAsc  sortOrderType = "asc"
+		sortOrderDesc sortOrderType = "desc"
+	)
+	var sortOrder sortOrderType = sortOrderAsc
+	sortOrderStr := r.URL.Query().Get("sort")
+	if sortOrderStr == string(sortOrderDesc) {
+		sortOrder = sortOrderDesc
 	}
 
 	chirpList, err := cfg.db.GetChirpList(r.Context())
@@ -40,6 +52,10 @@ func (cfg *apiConfig) handlerChirpList(w http.ResponseWriter, r *http.Request) {
 			Body:      chirp.Body,
 			UserID:    chirp.UserID,
 		}
+	}
+
+	if sortOrder == sortOrderDesc {
+		slices.Reverse(responseList)
 	}
 
 	respondWithJSON(w, http.StatusOK, responseList)
